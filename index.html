@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
+  <title>Game Statistics</title>
+  <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="datatables/DataTables-1.13.5/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+  <script src="datatables/DataTables-1.13.5/js/jquery.dataTables.min.js"></script>
+  <style>
+    /* CSS styles for the tables to make cell widths uniform */
+    #roundInfo table,
+    #ladderInfoTable {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    #roundInfo table td,
+    #ladderInfoTable td {
+      width: 33.33%;
+      /* Equal width for each cell in the table */
+      white-space: nowrap;
+      /* Prevent line breaks in cells */
+      overflow: hidden;
+      /* Hide any content that overflows the cell */
+      text-overflow: ellipsis;
+      /* Show ellipsis for overflowing text */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mt-3">
+    <div class="row">
+      <div class="col-md-6">
+        <!-- Round Selection (Right Column) -->
+        <label for="roundSelect">Select Round:</label>
+        <select id="roundSelect" class="form-control">
+          <!-- Round options will be populated here -->
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <!-- Ladder Selection (Left Column) -->
+        <label for="ladderSelect">Select Ladder:</label>
+        <select id="ladderSelect" class="form-control">
+          <!-- Ladder options will be populated here -->
+        </select>
+      </div>
+    </div>
+
+    <div class="container mt-3">
+      <!-- New div to display round information in a single line -->
+      <div id="roundInfo" class="row">
+        <div class="col-md-12">
+          <table class="table table-bordered">
+            <tbody>
+              <tr>
+                <td><strong>Round Type:</strong> <span id="roundType"></span></td>
+                <td><strong>Created On:</strong> <span id="createdOn"></span></td>
+                <td><strong>Closed On:</strong> <span id="closedOn"></span></td>
+                <!-- You can add more information here as needed -->
+              </tr>
+            </tbody>
+          </table>
+          <table class="table table-bordered" id="ladderInfoTable">
+            <tbody>
+              <!-- Ladder information will be added here dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mt-3">
+      <table id="rankersTable" class="table table-striped table-bordered" style="width:100%">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Asshole Tag</th>
+            <th>Asshole Points</th>
+            <th>Username</th>
+            <th>AccountID</th>
+            <th>Points</th>
+            <th>Power</th>
+            <th>Bias</th>
+            <th>Multi</th>
+            <th>Grapes</th>
+            <th>Vinegar</th>
+            <th>AutoPromote</th>
+            <th>Promoted</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rankers' stats will be added here dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      let jsonData; // Declare jsonData in the global scope
+      let dataTable; // Declare dataTable in the global scope
+
+      // Function to populate the table based on the selected ladder
+      function populateTable(selectedLadder) {
+        // Check if jsonData and jsonData.ladders are defined
+        if (!jsonData || !jsonData.ladders) {
+          console.error("JSON data or Ladders property is missing.");
+          return;
+        }
+
+        // Get the ladder object that matches the selected ladder number
+        const ladder = jsonData.ladders[selectedLadder];
+
+        if (ladder) {
+          const rankersData = ladder.rankers;
+          const tableBody = $("#rankersTable tbody");
+
+          // Clear the table body
+          tableBody.empty();
+
+          // Loop through rankersData and populate the table rows
+          rankersData.forEach(ranker => {
+            const assholeTag = ranker.assholeTag || ranker.tag || '';
+            const assholePoints = ranker.assholePoints || ranker.ahPoints || 0;
+
+            const tableRow = `
+            <tr>
+              <td>${ranker.rank}</td>
+              <td>${assholeTag}</td>
+              <td>${assholePoints}</td>
+              <td>${ranker.username}</td>
+              <td>${ranker.accountId}</td>
+              <td>${ranker.points}</td>
+              <td>${ranker.power}</td>
+              <td>${ranker.bias}</td>
+              <td>${ranker.multi}</td>
+              <td>${ranker.grapes}</td>
+              <td>${ranker.vinegar}</td>
+              <td>${ranker.autoPromote}</td>
+              <td>${ranker.growing === true ? '❌' : '✔️'}</td>
+            </tr>
+          `;
+
+            tableBody.append(tableRow);
+          });
+
+          // Check if dataTable already exists
+          if ($.fn.DataTable.isDataTable("#rankersTable")) {
+            // If the DataTable exists, clear the existing rows and add new ones
+            dataTable.clear().rows.add(rankersData).draw();
+          } else {
+            // If the DataTable doesn't exist, initialize it
+            dataTable = $("#rankersTable").DataTable({
+              data: rankersData,
+              columns: [
+                { data: "rank" },
+                {
+                  data: null,
+                  render: function (data, type, row) {
+                    return row.assholeTag || row.tag || '';
+                  }
+                },
+                {
+                  data: null,
+                  render: function (data, type, row) {
+                    return row.assholePoints || row.ahPoints || 0;
+                  }
+                },
+                { data: "username" },
+                { data: "accountId" },
+                { data: "points" },
+                { data: "power" },
+                { data: "bias" },
+                { data: "multi" },
+                { data: "grapes" },
+                { data: "vinegar" },
+                { data: "autoPromote" },
+                {
+                  data: null,
+                  render: function (data, type, row) {
+                    return row.growing === true ? '\u274C' : '\u2705';
+                  }
+                }
+              ],
+              pageLength: -1,
+              dom: "rtip",
+              paging: false
+            });
+          }
+        } else {
+          console.error(`Selected ladder '${selectedLadder}' does not exist.`);
+        }
+      }
+
+      // Function to display the round information based on the selected ladder
+      function displayRoundInfo(selectedLadder) {
+        if (!jsonData || !jsonData.ladders) {
+          console.error("JSON data or Ladders property is missing.");
+          return;
+        }
+
+        // Check if the selectedLadder exists in jsonData.ladders
+        if (!jsonData.ladders.hasOwnProperty(selectedLadder)) {
+          console.error(`Selected ladder '${selectedLadder}' does not exist.`);
+          return;
+        }
+
+        // Your code to display round information using the provided jsonData
+        const roundInfo = jsonData.ladders[selectedLadder];
+        const roundNumber = jsonData.number;
+        const createdOn = new Date(jsonData.createdOn).toLocaleString();
+        const closedOn = new Date(jsonData.closedOn).toLocaleString();
+        const roundType = jsonData.roundTypes[0];
+
+        // Display round information in the table
+        $("#roundType").text(roundType);
+        $("#createdOn").text(createdOn);
+        $("#closedOn").text(closedOn);
+        // You can add more information here as needed
+
+        // Display ladder information in the table
+        const ladderInfoTable = $("#ladderInfoTable tbody");
+        ladderInfoTable.empty();
+
+        const ladderData = jsonData.ladders[selectedLadder];
+        const ladderTypes = ladderData.ladderTypes.join(', ');
+
+        // Create a new row for ladder information with concatenated ladder types
+        const ladderRow = `
+        <tr>
+          <td><strong>Ladder Types:</strong> ${ladderTypes}</td>
+          <td><strong>Base Points To Promote:</strong> ${ladderData.basePointsToPromote}</td>
+          <td><strong>Created On:</strong> ${new Date(ladderData.createdOn).toLocaleString()}</td>
+          <!-- You can add more information here as needed -->
+        </tr>
+      `;
+
+        ladderInfoTable.append(ladderRow);
+      }
+
+      // Function to fetch JSON data for the selected round
+      function fetchJSONData(roundNumber) {
+        const jsonFile = `${roundNumber}.json`;
+        const url = `rounddata/${jsonFile}`;
+
+        $.ajax({
+          url: url,
+          dataType: "json",
+          success: function (data) {
+            jsonData = data; // Update the jsonData variable with the loaded data
+
+            // Auto-populate the ladder numbers based on available ladders in jsonData
+            const ladderSelect = $("#ladderSelect");
+            ladderSelect.empty();
+
+            if (jsonData.ladders) {
+              for (const ladderNumber in jsonData.ladders) {
+                ladderSelect.append(`<option value="${ladderNumber}">${ladderNumber}</option>`);
+              }
+            }
+
+            // Convert the selected ladder number to a number using parseInt
+            const selectedLadder = parseInt($("#ladderSelect").val());
+
+            // Call the functions to display round information and populate the table
+            displayRoundInfo(selectedLadder); // Display round information
+            populateTable(selectedLadder); // Populate the table after data is loaded with the selected ladder number
+          },
+          error: function (xhr, status, error) {
+            console.error("Error loading JSON data:", error);
+          }
+        });
+      }
+
+      // Function to handle loading data when the round or ladder is selected
+      function loadRoundData() {
+        const selectedRound = $("#roundSelect").val();
+        // Load JSON data for the selected round from the dropdown
+        fetchJSONData(selectedRound);
+      }
+
+      // Function to handle loading data when the ladder is selected
+      function loadLadderData() {
+        const selectedLadder = $("#ladderSelect").val(); // Get the selected ladder number as a string
+        // Call the functions to display round information and populate the table
+        displayRoundInfo(selectedLadder); // Display round information
+        populateTable(selectedLadder); // Populate the table after data is loaded with the selected ladder number
+      }
+
+      // Handle the round selection change event to load data
+      $("#roundSelect").on("change", loadRoundData);
+
+      // Handle the ladder selection change event to load data
+      $("#ladderSelect").on("change", loadLadderData);
+
+      // Function to fetch round files and populate the dropdown on page load
+      function fetchRoundFiles() {
+        $.ajax({
+          url: "rounddata/",
+          success: function (data) {
+            const fileNames = $(data)
+              .find("a")
+              .map(function () {
+                return this.href.split("/").pop();
+              })
+              .get()
+              .filter(fileName => fileName.endsWith(".json")); // Filter only JSON files
+
+            populateRoundDropdown(fileNames);
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching round files:", error);
+          }
+        });
+      }
+
+      // Function to populate the round number dropdown
+      function populateRoundDropdown(fileNames) {
+        const roundSelect = $("#roundSelect");
+        roundSelect.empty();
+
+        // Add the fetched round files to the dropdown
+        fileNames.forEach(fileName => {
+          const roundNumber = fileName.replace(/\.json$/, ""); // Remove ".json" extension
+          roundSelect.append(`<option value="${roundNumber}">${roundNumber}</option>`);
+        });
+
+        // Load data for the initial round selection
+        loadRoundData();
+      }
+
+      // Fetch round files and populate the dropdown on page load
+      fetchRoundFiles();
+    </script>
+</body>
+
+</html>
