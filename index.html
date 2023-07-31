@@ -304,17 +304,10 @@
       // Function to fetch round files and populate the dropdown on page load
       function fetchRoundFiles() {
         $.ajax({
-          url: "rounddata/",
+          url: "fileList.json",
+          dataType: "json",
           success: function (data) {
-            const fileNames = $(data)
-              .find("a")
-              .map(function () {
-                return this.href.split("/").pop();
-              })
-              .get()
-              .filter(fileName => fileName.endsWith(".json")); // Filter only JSON files
-
-            populateRoundDropdown(fileNames);
+            populateRoundDropdown(data);
           },
           error: function (xhr, status, error) {
             console.error("Error fetching round files:", error);
