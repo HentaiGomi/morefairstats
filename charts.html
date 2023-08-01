@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Statistics - Bar Graph</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="data.js"></script>
+    <script>
+        console.log("Chart.js version:", Chart.version);
+        console.log("jQuery version:", $.fn.jquery);
+
+        // Call loadRoundData when the page loads
+        $(document).ready(function () {
+            loadRoundData();
+        });
+    </script>
+</head>
+
+<body>
+    <h1>Charts</h1>
+    <div>
+        <label for="roundSelect">Select Round:</label>
+        <select id="roundSelect"></select>
+    </div>
+    <div>
+        <h2>Vinegar Count Chart</h2>
+        <canvas id="vinegarChart"></canvas>
+    </div>
+    <div>
+        <h2>Grape Count Chart</h2>
+        <canvas id="grapeChart"></canvas>
+    </div>
+
+</body>
+
+</html>
